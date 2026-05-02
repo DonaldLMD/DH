@@ -626,7 +626,19 @@ input[type=number]::-webkit-outer-spin-button {
 .sheet-damage-container {
     position: relative;
 }
+.sheet-hope-container {
+    position: relative;
+}
 
+.sheet-hope-container input[type=number] {
+    position: absolute;
+    right: 25px;
+    top: 0px;
+    width: 45px;
+    text-align: center;
+    border: 1px solid black;
+    font-weight: bold;
+}
 .sheet-armor-container input[type=number],
 .sheet-hp-container input[type=number] {
     position: absolute;
