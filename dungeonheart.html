@@ -446,10 +446,8 @@
                 <div class="mid-content moves">
                     <fieldset class="repeating_moves">
                         <div class="move-main">
-                            <button type="action" name="roll_move">
-                                @{move_name}
-                                <span class="rolltext" name="attr_move_name" value="@{move_name}"></span>
-                            </button>
+                            <button type="action" name="act_rollmove" value="attr_move_name">
+                                <span class="rolltext" name="attr_move_name" value=" asda @{move_name} asdasda" base_name="@{movename_base}"></span>
                             </button>
                             <input class="expander expand-move" type="checkbox" name="attr_expand_move" value="1" title="Details" checked="checked"  />
                             <span> </span>
@@ -925,47 +923,77 @@
 <script type="text/worker">
 
     console.log("console workers loaded");
+on("clicked:repeating_moves", function(eventInfo) {
+    console.log("GENERIC CLICK:", eventInfo);
 
-        on("clicked:roll_move", function() {
-    console.log("clicked:roll_move");
-            getAttrs([
-                "character_name",
-                "move_name",
-                "movetrigger",
-                "movesuccess",
-                "movepartial",
-                "movemiss",
-                "movestat",
-                "movemod",
-                "rollforward",
-                "global_ongoing"
-            ], function(values) {
+    const details = eventInfo.sourceAttribute.split("_");
 
-                const d1 = randomInteger(12);
-                const d2 = randomInteger(12);
+    const section = details[0] + "_" + details[1];
+    const rowID   = details[2];
+    const button  = details[3];
 
-                const total =
-                    d1 +
-                    d2 +
-                    parseInt(values.movestat || 0) +
-                    parseInt(values.movemod || 0) +
-                    parseInt(values.rollforward || 0) +
-                    parseInt(values.global_ongoing || 0);
+    console.log("Row ID:", rowID);
+    console.log("Button Clicked:", button);
+});
 
-                startRoll(
-    `&{template:move}
-    {{charname=${values.character_name}}}
-    {{movename=${values.move_name}}}
-    {{trigger=${values.movetrigger}}}
-    {{success=${values.movesuccess}}}
-    {{partial=${values.movepartial}}}
-    {{miss=${values.movemiss}}}
-    {{d1=${d1}}}
-    {{d2=${d2}}}
-    {{result=${total}}}`
-    );
-            });
+
+on("clicked:repeating_moves:rollmove", function(eventInfo) {
+
+    const rowId = eventInfo.sourceAttribute.split("_")[2];
+    const prefix = `repeating_moves_${rowId}_`;
+
+    getAttrs([
+        "character_name",
+        `${prefix}move_name`,
+        `${prefix}movetrigger`,
+        `${prefix}movesuccess`,
+        `${prefix}movepartial`,
+        `${prefix}movemiss`,
+        `${prefix}movestat`,
+        `${prefix}movemod`,
+        "rollforward",
+        "global_ongoing"
+    ], function(values) {
+
+        console.log("VALUES", values);
+
+        const moveName = values[`${prefix}move_name`];
+        const trigger  = values[`${prefix}movetrigger`];
+        const success  = values[`${prefix}movesuccess`];
+        const partial  = values[`${prefix}movepartial`];
+        const miss     = values[`${prefix}movemiss`];
+
+        const d1 = Math.floor(Math.random() * 12) + 1;
+        const d2 = Math.floor(Math.random() * 12) + 1;
+
+        const stat    = parseInt(values[`${prefix}movestat`]) || 0;
+        const mod     = parseInt(values[`${prefix}movemod`]) || 0;
+        const forward = parseInt(values.rollforward) || 0;
+        const ongoing = parseInt(values.global_ongoing) || 0;
+
+        const myRealTotal = d1 + d2 + stat + mod + forward + ongoing;
+
+        startRoll(`
+&{template:move}
+{{charname=${values.character_name}}}
+{{movename=${moveName}}}
+{{trigger=${trigger}}}
+{{success=${success}}}
+{{partial=${partial}}}
+{{miss=${miss}}}
+{{d1=${d1}}}
+{{d2=${d2}}}
+{{result=${myRealTotal}}}
+        `, function(results) {
+
+            finishRoll(results.rollId);
+
         });
+
+    });
+
+});
+
                 // Storing the data for moves right in the sheet, as js object.
                 var dwMoves = {
                     hackandslash: {
