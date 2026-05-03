@@ -784,7 +784,7 @@
             {{/miss}}
             {{/rollLess() result 12}}
 
-            {{#rollBetween() computed::result 12 18}}
+            {{#rollBetween() result 12 18}}
             {{#partial}}
             <div class="rt-row">
                 <span class="label rt-label" data-i18n="move-effect">Effect:</span>
@@ -948,7 +948,7 @@ on("clicked:repeating_moves:rollmove", function(eventInfo) {
         const is_double = (d1 === d2) ? 1 : 0;
 
         // FIXED: Corrected the braces and variable names here
-        const rollString = `&{template:move} {{charname=${values.character_name}}} {{movename=${values[`${prefix}move_name`]}}} {{trigger=${values[`${prefix}movetrigger`]}}} {{d1=${d1}}} {{d2=${d2}}} {{result=${myRealTotal}} {{outcome=${outcome}}} {{success=${values[`${prefix}movesuccess`]}}} {{partial=${values[`${prefix}movepartial`]}}} {{miss=${values[`${prefix}movemiss`]}}} {{is_double=${is_double}}}`;
+        const rollString = `&{template:move} {{charname=${values.character_name}}} {{movename=${values[`${prefix}move_name`]}}} {{trigger=${values[`${prefix}movetrigger`]}}} {{d1=${d1}}} {{d2=${d2}}} {{result=[[${myRealTotal}]]}} {{outcome=${outcome}}} {{success=${values[`${prefix}movesuccess`]}}} {{partial=${values[`${prefix}movepartial`]}}} {{miss=${values[`${prefix}movemiss`]}}} {{is_double=${is_double}}}`;
         console.log(rollString);
         startRoll(rollString, function(results) {
             // This injects myRealTotal into the {{result=[]}} placeholder
