@@ -904,9 +904,17 @@
 
     console.log("console workers loaded");
 on("clicked:repeating_moves:rollmove", function(eventInfo) {
+    // Safer way to get the Row ID
 
-    const rowId = eventInfo.sourceAttribute.split("_")[2];
+        // SAFETY: Only call getAttrs if we actually found a stat name
+        console.log("-1");
+
+    const source = eventInfo.sourceAttribute.split("_");
+    const rowId = source[2];
     const prefix = `repeating_moves_${rowId}_`;
+
+        // SAFETY: Only call getAttrs if we actually found a stat name
+        console.log("0");
 
     getAttrs([
         "character_name",
@@ -921,43 +929,54 @@ on("clicked:repeating_moves:rollmove", function(eventInfo) {
         "global_ongoing"
     ], function(values) {
 
-        const d1 = Math.floor(Math.random() * 12) + 1;
-        const d2 = Math.floor(Math.random() * 12) + 1;
+        // 1. Clean the stat string.
+        // Example: "@{strength_mod}[strength]" -> "strength_mod"
+        const statRaw = values[`${prefix}movestat`] || "";
+        //const statName = statRaw.replace(/[@{}]/g, "").split("[")[0];
+        const match = statRaw.match(/\[([^\]]+)\]/);
+        const statName = match ? match[1] : "";
+        // SAFETY: Only call getAttrs if we actually found a stat name
+        console.log("1");
 
-        const stat    = parseInt(values[`${prefix}movestat`]) || 0;
-        const mod     = parseInt(values[`${prefix}movemod`]) || 0;
-        const forward = parseInt(values.rollforward) || 0;
-        const ongoing = parseInt(values.global_ongoing) || 0;
+        const attrsToFetch = ["character_name", "rollforward", "global_ongoing", statName];
+        console.log("2");
 
-        const myRealTotal = d1 + d2 + stat + mod + forward + ongoing;
+        if (statName) attrsToFetch.push(statName);
+        console.log("3");
+        getAttrs(attrsToFetch, function(statValues) {
+            console.log("4");
+            const d1 = Math.floor(Math.random() * 12) + 1;
+            const d2 = Math.floor(Math.random() * 12) + 1;
+            console.log(statValues);
+            // Use the numeric value from the character sheet
+            const statScore = calculateMod(parseInt(statValues[statName] || 0));
+            const mod       = parseInt(values[`${prefix}movemod`]) || 0;
+            const forward   = parseInt(values.rollforward) || 0;
+            const ongoing   = parseInt(values.global_ongoing) || 0;
 
-        let outcome = "";
-        let outcome_text = "";
+            const myRealTotal = d1 + d2 + statScore + mod + forward + ongoing;
+        console.log("5");
 
-        if (myRealTotal < 12) {
-            outcome = "miss";
-            outcome_text = values[`${prefix}movemiss`] || "";
-        } else if (myRealTotal <= 18) {
-            outcome = "partial";
-            outcome_text = values[`${prefix}movepartial`] || "";
-        } else {
-            outcome = "success";
-            outcome_text = values[`${prefix}movesuccess`] || "";
-        }
+            let outcome = "";
+            if (myRealTotal < 12) outcome = "miss";
+            else if (myRealTotal <= 18) outcome = "partial";
+            else outcome = "success";
 
-        const is_double = (d1 === d2) ? 1 : 0;
+            const is_double = (d1 === d2) ? 1 : 0;
 
-        // FIXED: Corrected the braces and variable names here
-        const rollString = `&{template:move} {{charname=${values.character_name}}} {{movename=${values[`${prefix}move_name`]}}} {{trigger=${values[`${prefix}movetrigger`]}}} {{d1=${d1}}} {{d2=${d2}}} {{result=[[${myRealTotal}]]}} {{outcome=${outcome}}} {{success=${values[`${prefix}movesuccess`]}}} {{partial=${values[`${prefix}movepartial`]}}} {{miss=${values[`${prefix}movemiss`]}}} {{is_double=${is_double}}}`;
-        console.log(rollString);
-        startRoll(rollString, function(results) {
-            // This injects myRealTotal into the {{result=[]}} placeholder
-            finishRoll(results.rollId, {
-                result: myRealTotal
+            const rollString = `&{template:move} {{charname=${values.character_name}}} {{movename=${values[`${prefix}move_name`]}}} {{trigger=${values[`${prefix}movetrigger`]}}} {{d1=${d1}}} {{d2=${d2}}} {{result=[[${myRealTotal}]]}} {{outcome=${outcome}}} {{success=${values[`${prefix}movesuccess`]}}} {{partial=${values[`${prefix}movepartial`]}}} {{miss=${values[`${prefix}movemiss`]}}} {{is_double=${is_double}}}`;
+            console.log("6");
+
+            startRoll(rollString, function(results) {
+                finishRoll(results.rollId, {
+
+                    result: myRealTotal
+                });
             });
         });
     });
 });
+
 
                 // Storing the data for moves right in the sheet, as js object.
                 var dwMoves = {
